@@ -33,7 +33,7 @@ jobs:
               pip install -r requirements.txt
           fi
           # 如果 Passive-Analysis.py 有其他未在 requirements.txt 中的依赖，请在此处添加
-          pip install pandas openpyxl # 确保这些库已安装
+          
 
       - name: Download Artifact for Automatic Trigger
         if: github.event_name == 'repository_dispatch'
@@ -58,3 +58,10 @@ jobs:
 
       - name: Run stock analysis script
         run: python Passive-Analysis.py
+
+      - name: Upload generated charts
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-stock-charts
+          path: "*.png"
+          retention-days: 5 # 可选：设置artifact的保留天数
