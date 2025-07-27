@@ -63,5 +63,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: generated-stock-charts
-          path: "*.png"
+          path: "K_line_charts/"
           retention-days: 5 # 可选：设置artifact的保留天数
