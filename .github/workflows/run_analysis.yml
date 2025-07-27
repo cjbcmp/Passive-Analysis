@@ -64,4 +64,11 @@ jobs:
         with:
           name: generated-stock-charts
           path: "K_line_charts/"
-          retention-days: 5 # 可选：设置artifact的保留天数
+          retention-days: 3 # 可选：设置artifact的保留天数
+
+      - name: Upload low volatility stocks list
+        uses: actions/upload-artifact@v4
+        with:
+          name: low-volatility-stocks-list
+          path: low_volatility_stocks.xlsx
+          retention-days: 3 # 可选：设置artifact的保留天数
