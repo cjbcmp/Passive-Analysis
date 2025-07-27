@@ -1,0 +1,49 @@
+name: Run Stock Analysis
+
+on:
+  repository_dispatch:
+    types: [stockdata-update] # 监听来自 Stockdata 仓库的特定事件类型
+  workflow_dispatch: # 允许手动触发，方便测试
+
+jobs:
+  analyze_data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x' # 根据你的项目需求调整 Python 版本
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # 假设 requirements.txt 在仓库根目录
+          if [ -f requirements.txt ]; then
+              pip install -r requirements.txt
+          fi
+          # 如果 Passive-Analysis.py 有其他未在 requirements.txt 中的依赖，请在此处添加
+          pip install pandas openpyxl # 确保这些库已安装
+
+      - name: Download stock_kline_data.xlsx from Stockdata
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }} # 使用默认的 GITHUB_TOKEN
+          workflow: Daily Data Generation and Dispatch # Stockdata 仓库的工作流名称
+          run_id: ${{ github.event.client_payload.run_id }} # 从触发事件中获取 run_id
+          name: stock-kline-data # artifact 的名称
+          repo: ${{ github.event.client_payload.repository }} # 从触发事件中获取仓库名称
+          path: . # 下载到当前工作目录
+
+      - name: Run stock analysis script
+        run: python Passive-Analysis.py
