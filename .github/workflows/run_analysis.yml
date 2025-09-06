@@ -32,12 +32,26 @@ jobs:
       - name: Run stock analysis script
         run: python Passive-Analysis.py
 
-      - name: Upload generated artifacts
+      - name: Upload K-line charts
         uses: actions/upload-artifact@v4
         with:
-          name: generated-files
-          path: |
-            K_line_charts/
-            low_volatility_stocks.xlsx
-            low_volatility_stocks.jpg
+          name: k-line-charts
+          path: K_line_charts/
+          retention-days: 3
+          if-no-files-found: ignore
+
+      - name: Upload Excel file
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-list-excel
+          path: low_volatility_stocks.xlsx
+          retention-days: 3
+          if-no-files-found: ignore
+
+      - name: Upload JPG file
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-list-image
+          path: low_volatility_stocks.jpg
+          retention-days: 3
           if-no-files-found: ignore
