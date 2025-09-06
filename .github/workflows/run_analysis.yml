@@ -72,3 +72,10 @@ jobs:
           name: low-volatility-stocks-list
           path: low_volatility_stocks.xlsx
           retention-days: 3 # 可选：设置artifact的保留天数
+
+      - name: Upload low volatility stocks image
+        uses: actions/upload-artifact@v4
+        with:
+          name: low-volatility-stocks-image
+          path: low_volatility_stocks.jpg
+          retention-days: 3
