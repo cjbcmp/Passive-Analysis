@@ -17,22 +17,12 @@ jobs:
         with:
           python-version: '3.x' # 根据你的项目需求调整 Python 版本
 
-      - name: Cache Python dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install dependencies
+      - name: Install dependencies and fonts
         run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-wqy-zenhei
           python -m pip install --upgrade pip
-          # 假设 requirements.txt 在仓库根目录
-          if [ -f requirements.txt ]; then
-              pip install -r requirements.txt
-          fi
-          # 如果 Passive-Analysis.py 有其他未在 requirements.txt 中的依赖，请在此处添加
+          pip install baostock pandas numpy plotly openpyxl matplotlib
           
 
       - name: Download Artifact for Automatic Trigger
