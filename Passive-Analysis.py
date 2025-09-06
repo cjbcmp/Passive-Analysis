@@ -296,7 +296,10 @@ def analyze_and_generate_kline_charts(filename, custom_params=None):
     
     # 提取股票代码中的数字部分，并保持前导零
     numeric_codes = [re.search(r'\d+', code).group(0) for code in valid_stocks]
-    result_df = pd.DataFrame({"股票代码": numeric_codes})
+    
+    # 创建新的列名
+    new_column_name = f"{latest_date_str}股票代码"
+    result_df = pd.DataFrame({new_column_name: numeric_codes})
 
     # 使用 'xlsxwriter' 引擎并设置文本格式来保存
     with pd.ExcelWriter(output_filename, engine='xlsxwriter') as writer:
@@ -304,7 +307,7 @@ def analyze_and_generate_kline_charts(filename, custom_params=None):
         workbook  = writer.book
         worksheet = writer.sheets['Sheet1']
         text_format = workbook.add_format({'num_format': '@'})
-        worksheet.set_column('A:A', 12, text_format) # 设置A列宽度为12
+        worksheet.set_column('A:A', len(new_column_name) + 4, text_format) # 设置A列宽度
 
     print(f"已保存筛选结果到: {output_filename}")
 
