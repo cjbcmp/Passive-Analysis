@@ -311,6 +311,37 @@ def analyze_and_generate_kline_charts(filename, custom_params=None):
 
     print(f"已保存筛选结果到: {output_filename}")
 
+    # --- 生成JPG图片 (使用 matplotlib) ---
+    try:
+        import matplotlib.pyplot as plt
+        
+        # 解决中文乱码问题
+        plt.rcParams['font.sans-serif'] = ['SimHei']
+        plt.rcParams['axes.unicode_minus'] = False
+
+        fig, ax = plt.subplots(figsize=(8, 2 + len(result_df) * 0.3)) # 根据行数调整图片大小
+        ax.axis('tight')
+        ax.axis('off')
+
+        the_table = ax.table(cellText=result_df.values, colLabels=result_df.columns, loc='center', cellLoc='center')
+        the_table.auto_set_font_size(False)
+        the_table.set_fontsize(10)
+        the_table.scale(1.2, 1.2)
+
+        # 设置表头颜色
+        for (i, j), cell in the_table.get_celld().items():
+            if i == 0:
+                cell.set_facecolor("#40466e")
+                cell.set_text_props(color='white')
+
+        plt.title('低波动股票列表', fontsize=16, y=1.05) # 调整标题位置
+        image_filename = "low_volatility_stocks.jpg"
+        plt.savefig(image_filename, bbox_inches='tight', dpi=200)
+        plt.close(fig)
+        print(f"已保存图片结果到: {image_filename}")
+    except Exception as e:
+        print(f"× 生成图片文件失败: {str(e)}")
+
     print("" + "="*50)
     print("低波动股票按行业分类列表：")
     
@@ -423,7 +454,7 @@ if __name__ == "__main__":
         except ImportError as e:
             print(f"错误：缺少必要依赖库 - {str(e)}")
             print("请执行以下命令安装依赖：")
-            print("pip install baostock pandas numpy plotly openpyxl")
+            print("pip install baostock pandas numpy plotly openpyxl matplotlib")
             sys.exit(1)
 
         # 登录BaoStock
