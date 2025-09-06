@@ -17,12 +17,22 @@ jobs:
         with:
           python-version: '3.x' # 根据你的项目需求调整 Python 版本
 
-      - name: Install dependencies and fonts
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y fonts-wqy-zenhei
           python -m pip install --upgrade pip
-          pip install baostock pandas numpy plotly openpyxl matplotlib
+          # 假设 requirements.txt 在仓库根目录
+          if [ -f requirements.txt ]; then
+              pip install -r requirements.txt
+          fi
+          # 如果 Passive-Analysis.py 有其他未在 requirements.txt 中的依赖，请在此处添加
           
 
       - name: Download Artifact for Automatic Trigger
@@ -62,10 +72,3 @@ jobs:
           name: low-volatility-stocks-list
           path: low_volatility_stocks.xlsx
           retention-days: 3 # 可选：设置artifact的保留天数
-
-      - name: Upload low volatility stocks image
-        uses: actions/upload-artifact@v4
-        with:
-          name: low-volatility-stocks-image
-          path: low_volatility_stocks.jpg
-          retention-days: 3
