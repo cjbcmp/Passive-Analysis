@@ -313,19 +313,33 @@ def analyze_and_generate_kline_charts(filename, custom_params=None):
 
     # --- 生成JPG图片 (使用 Plotly) ---
     try:
+        # 根据行数动态计算图片高度，防止内容截断
+        header_height = 70  # 表头高度
+        row_height = 50     # 每行高度
+        image_height = header_height + (len(result_df) * row_height) + 40 # 增加一些额外边距
+
         fig = go.Figure(data=[go.Table(
             header=dict(values=list(result_df.columns),
                         fill_color='lightgrey',
-                        align='left'),
+                        align='left',
+                        height=header_height,
+                        font=dict(size=18)), # 增大表头字体
             cells=dict(values=[result_df[col] for col in result_df.columns],
-                       align='left'))
+                       align='left',
+                       height=row_height,
+                       font=dict(size=16))) # 增大单元格字体
         ])
+        
         fig.update_layout(
-            title_text='',
-            margin=dict(l=10, r=10, t=10, b=10)
+            height=image_height,
+            margin=dict(l=20, r=20, t=50, b=20), # 增加上下边距
+            title_text='低波动股票列表', # 添加标题
+            title_x=0.5,
+            title_font_size=22
         )
+
         image_filename = "low_volatility_stocks.jpg"
-        fig.write_image(image_filename)
+        fig.write_image(image_filename, scale=1.5) # 适当增加分辨率
         print(f"已保存图片结果到: {image_filename}")
     except Exception as e:
         print(f"× 生成图片文件失败: {str(e)}")
