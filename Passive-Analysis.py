@@ -315,13 +315,14 @@ def analyze_and_generate_kline_charts(filename, custom_params=None):
     try:
         from PIL import Image, ImageDraw, ImageFont
         
-        # 从刚保存的Excel中读回数据
-        df_for_image = pd.read_excel(output_filename)
+        # 从刚保存的Excel中读回数据，确保股票代码列作为字符串读取
+        # 获取第一列的列名
+        temp_df = pd.read_excel(output_filename, nrows=0) # Read only header to get column name
+        column_name = temp_df.columns[0]
+        df_for_image = pd.read_excel(output_filename, dtype={column_name: str})
         
-        # 获取第一列的列名和所有数据
-        column_name = df_for_image.columns[0]
         # 将列名作为标题，并添加所有股票代码
-        stock_codes = [f"--- {column_name} ---"] + df_for_image[column_name].astype(str).tolist()
+        stock_codes = [f"--- {column_name} ---"] + df_for_image[column_name].tolist()
 
         # 定义图片和字体参数
         font_size = 14
