@@ -196,7 +196,7 @@ def analyze_and_generate_kline_charts(filename, custom_params=None):
         params.update(custom_params)
 
     try:
-        df = pd.read_excel(filename, index_col="股票代码")
+        df = pd.read_excel(filename, index_col="股票代码", dtype={'股票代码': str})
         
         date_columns = [col.split('_')[1] for col in df.columns if '收盘价_' in col]
         
@@ -294,12 +294,9 @@ def analyze_and_generate_kline_charts(filename, custom_params=None):
 
     output_filename = "low_volatility_stocks.xlsx"
     
-    # 提取股票代码中的数字部分，并保持前导零
-    numeric_codes = [re.search(r'\d+', code).group(0) for code in valid_stocks]
-    
-    # 创建新的列名
+    # 创建新的列名，直接使用筛选后的股票代码（已确保前导零）
     new_column_name = f"{latest_date_str}股票代码"
-    result_df = pd.DataFrame({new_column_name: numeric_codes})
+    result_df = pd.DataFrame({new_column_name: valid_stocks})
 
     # 使用 'xlsxwriter' 引擎并设置文本格式来保存
     with pd.ExcelWriter(output_filename, engine='xlsxwriter') as writer:
