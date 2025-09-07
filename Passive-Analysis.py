@@ -311,41 +311,54 @@ def analyze_and_generate_kline_charts(filename, custom_params=None):
 
     print(f"已保存筛选结果到: {output_filename}")
 
-    # --- 生成JPG图片 (使用 Plotly) ---
+    # --- 生成JPG图片 (使用 Pillow，更轻量) ---
     try:
-        # 根据行数动态计算图片高度，防止内容截断
-        header_height = 80  # 表头高度
-        row_height = 60     # 每行高度
-        image_height = header_height + (len(result_df) * row_height) + 60 # 增加一些额外边距
-
-        fig = go.Figure(data=[go.Table(
-            header=dict(values=list(result_df.columns),
-                        fill_color='lightgrey',
-                        align='left',
-                        height=header_height,
-                        font=dict(size=18)),
-            cells=dict(values=[result_df[col] for col in result_df.columns],
-                       align='left',
-                       height=row_height,
-                       font=dict(size=16)))
-        ])
+        from PIL import Image, ImageDraw, ImageFont
         
-        fig.update_layout(
-            height=image_height,
-            width=200, # 设置固定宽度以显示完整内容
-            margin=dict(l=20, r=20, t=50, b=40), # 增加下边距
-            title_text='低波动股票列表',
-            title_x=0.5,
-            title_font_size=22
-        )
+        # 从刚保存的Excel中读回数据
+        df_for_image = pd.read_excel(output_filename)
+        
+        # 获取第一列的列名和所有数据
+        column_name = df_for_image.columns[0]
+        # 将列名作为标题，并添加所有股票代码
+        stock_codes = [f"--- {column_name} ---"] + df_for_image[column_name].astype(str).tolist()
 
+        # 定义图片和字体参数
+        font_size = 14
+        padding = 15
+        line_height = font_size + 8
+        
+        # 尝试加载一个美观的字体，如果失败则使用默认字体
+        try:
+            # 在Windows上通常是 'msyh.ttc' (微软雅黑), 在Linux服务器上 'DejaVuSansMono.ttf' 更常见
+            font = ImageFont.truetype("DejaVuSansMono.ttf", font_size)
+        except IOError:
+            print("警告: 找不到 DejaVuSansMono 字体，将使用默认字体。图片对齐可能不佳。")
+            font = ImageFont.load_default()
+
+        # 计算图片尺寸
+        img_width = 300  # 固定宽度
+        img_height = (len(stock_codes) * line_height) + (2 * padding)
+
+        # 创建白色背景的图片
+        image = Image.new('RGB', (img_width, img_height), 'white')
+        draw = ImageDraw.Draw(image)
+
+        # 逐行绘制文本
+        y_text = padding
+        for line in stock_codes:
+            draw.text((padding, y_text), line, font=font, fill='black')
+            y_text += line_height
+
+        # 保存图片
         image_filename = "low_volatility_stocks.jpg"
-        # 将分辨率scale设置为1.0以减小文件大小
-        fig.write_image(image_filename, scale=1.0)
-        print(f"已保存图片结果到: {image_filename}")
+        image.save(image_filename)
+        print(f"已通过 Pillow 成功生成图片: {image_filename}")
+
+    except ImportError:
+        print("× 生成图片失败: 请安装 Pillow 库 (pip install Pillow)")
     except Exception as e:
-        print(f"× 生成图片文件失败: {str(e)}")
-        print("× 请确认已安装 kaleido 库: pip install kaleido")
+        print(f"× 使用 Pillow 生成图片时发生未知错误: {str(e)}")
 
     print("" + "="*50)
     print("低波动股票按行业分类列表：")
