@@ -1,7 +1,9 @@
 name: Run Stock Analysis
 
 on:
-  workflow_dispatch:
+  repository_dispatch:
+    types: [stockdata-update] # 监听来自 Stockdata 仓库的特定事件类型
+  workflow_dispatch: # 允许手动触发，方便测试
 
 jobs:
   analyze_data:
@@ -13,14 +15,26 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.x' # 根据你的项目需求调整 Python 版本
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install baostock pandas numpy plotly openpyxl kaleido xlsxwriter
+          pip install baostock pandas numpy plotly openpyxl kaleido Pillow
           
+      - name: Download Artifact for Automatic Trigger
+        if: github.event_name == 'repository_dispatch'
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: Daily Data Generation and Dispatch
+          run_id: ${{ github.event.client_payload.run_id }}
+          name: stock-kline-data
+          repo: ${{ github.event.client_payload.repository }}
+          path: .
+
       - name: Download Release Asset for Manual Trigger
+        if: github.event_name == 'workflow_dispatch'
         uses: dsaltares/fetch-gh-release-asset@1.1.0
         with:
           repo: 'cjbcmp/Stockdata'
@@ -28,30 +42,27 @@ jobs:
           file: 'stock_kline_data.xlsx'
           target: 'stock_kline_data.xlsx'
           token: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Run stock analysis script
         run: python Passive-Analysis.py
 
-      - name: Upload K-line charts
+      - name: Upload generated charts
         uses: actions/upload-artifact@v4
         with:
-          name: k-line-charts
-          path: K_line_charts/
+          name: generated-stock-charts
+          path: "K_line_charts/"
           retention-days: 3
-          if-no-files-found: ignore
 
-      - name: Upload Excel file
+      - name: Upload low volatility stocks list
         uses: actions/upload-artifact@v4
         with:
-          name: stock-list-excel
+          name: low-volatility-stocks-list
           path: low_volatility_stocks.xlsx
           retention-days: 3
-          if-no-files-found: ignore
 
-      - name: Upload JPG file
+      - name: Upload low volatility stocks image
         uses: actions/upload-artifact@v4
         with:
-          name: stock-list-image
+          name: low-volatility-stocks-image
           path: low_volatility_stocks.jpg
           retention-days: 3
-          if-no-files-found: ignore
