@@ -88,6 +88,54 @@ def plot_kline_plotly(ohlc_data, code, stock_name, save_dir, latest_amount, late
     save_path = os.path.join(save_dir, f"{code}_{clean_stock_name}_K线图.png")
     fig.write_image(save_path, scale=2)
 
+def add_market_prefix(code):
+    """根据股票代码数字增加市场前缀"""
+    if code.startswith('6'):
+        return f"SH.{code}"
+    elif code.startswith('0') or code.startswith('3'):
+        return f"SZ.{code}"
+    elif code.startswith('8') or code.startswith('4'):
+        return f"BJ.{code}"
+    else:
+        return code # Fallback for unknown cases
+
+def generate_stock_list_image(stock_list, title, output_filename):
+    """使用Pillow生成包含股票代码列表的JPG图片"""
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+
+        image_data = [f"--- {title} ---"] + stock_list
+
+        font_size = 14
+        padding = 15
+        line_height = font_size + 8
+
+        try:
+            # 在Windows上通常是 'msyh.ttc' (微软雅黑), 在Linux服务器上 'DejaVuSansMono.ttf' 更常见
+            font = ImageFont.truetype("DejaVuSansMono.ttf", font_size)
+        except IOError:
+            print(f"警告: 找不到 DejaVuSansMono 字体，将使用默认字体。图片 {output_filename} 对齐可能不佳。")
+            font = ImageFont.load_default()
+
+        img_width = 300
+        img_height = (len(image_data) * line_height) + (2 * padding)
+
+        image = Image.new('RGB', (img_width, img_height), 'white')
+        draw = ImageDraw.Draw(image)
+
+        y_text = padding
+        for line in image_data:
+            draw.text((padding, y_text), line, font=font, fill='black')
+            y_text += line_height
+
+        image.save(output_filename)
+        print(f"已通过 Pillow 成功生成图片: {output_filename}")
+
+    except ImportError:
+        print(f"× 生成图片 {output_filename} 失败: 请安装 Pillow 库 (pip install Pillow)")
+    except Exception as e:
+        print(f"× 使用 Pillow 生成图片 {output_filename} 时发生未知错误: {str(e)}")
+
 # ======================= 数据分析模块 (来自 BS_Kline_range.py) =======================
 def is_continuous_decline(close_prices, window=5):
     """判断股票是否连续下跌（默认5日）"""
@@ -295,7 +343,13 @@ def analyze_and_generate_kline_charts(filename, custom_params=None):
     output_filename = "low_volatility_stocks.xlsx"
     
     # 提取股票代码中的数字部分，并保持前导零
-    numeric_codes = [re.search(r'\d+', code).group(0) for code in valid_stocks]
+    numeric_codes = []
+    for code in valid_stocks:
+        match = re.search(r'\d+', str(code))
+        if match:
+            numeric_codes.append(match.group(0))
+        else:
+            print(f"警告: 无法从 '{code}' 中提取数字代码，已跳过。")
     
     # 创建新的列名
     new_column_name = f"{latest_date_str}股票代码"
@@ -311,55 +365,24 @@ def analyze_and_generate_kline_charts(filename, custom_params=None):
 
     print(f"已保存筛选结果到: {output_filename}")
 
-    # --- 生成JPG图片 (使用 Pillow，更轻量) ---
+    # --- 生成两种格式的JPG图片 ---
     try:
-        from PIL import Image, ImageDraw, ImageFont
-        
-        # 从刚保存的Excel中读回数据，确保股票代码列作为字符串读取
-        # 获取第一列的列名
-        temp_df = pd.read_excel(output_filename, nrows=0) # Read only header to get column name
+        # 从刚保存的Excel中读回数据
+        temp_df = pd.read_excel(output_filename, nrows=0)
         column_name = temp_df.columns[0]
         df_for_image = pd.read_excel(output_filename, dtype={column_name: str})
-        
-        # 将列名作为标题，并添加所有股票代码
-        stock_codes = [f"--- {column_name} ---"] + df_for_image[column_name].tolist()
+        original_codes = df_for_image[column_name].tolist()
 
-        # 定义图片和字体参数
-        font_size = 14
-        padding = 15
-        line_height = font_size + 8
-        
-        # 尝试加载一个美观的字体，如果失败则使用默认字体
-        try:
-            # 在Windows上通常是 'msyh.ttc' (微软雅黑), 在Linux服务器上 'DejaVuSansMono.ttf' 更常见
-            font = ImageFont.truetype("DejaVuSansMono.ttf", font_size)
-        except IOError:
-            print("警告: 找不到 DejaVuSansMono 字体，将使用默认字体。图片对齐可能不佳。")
-            font = ImageFont.load_default()
+        # 1. 生成原始格式的图片
+        generate_stock_list_image(original_codes, column_name, "low_volatility_stocks.jpg")
 
-        # 计算图片尺寸
-        img_width = 300  # 固定宽度
-        img_height = (len(stock_codes) * line_height) + (2 * padding)
+        # 2. 生成带市场前缀格式的图片
+        prefixed_codes = [add_market_prefix(code) for code in original_codes]
+        generate_stock_list_image(prefixed_codes, column_name, "low_volatility_stocks_prefixed.jpg")
 
-        # 创建白色背景的图片
-        image = Image.new('RGB', (img_width, img_height), 'white')
-        draw = ImageDraw.Draw(image)
-
-        # 逐行绘制文本
-        y_text = padding
-        for line in stock_codes:
-            draw.text((padding, y_text), line, font=font, fill='black')
-            y_text += line_height
-
-        # 保存图片
-        image_filename = "low_volatility_stocks.jpg"
-        image.save(image_filename)
-        print(f"已通过 Pillow 成功生成图片: {image_filename}")
-
-    except ImportError:
-        print("× 生成图片失败: 请安装 Pillow 库 (pip install Pillow)")
     except Exception as e:
-        print(f"× 使用 Pillow 生成图片时发生未知错误: {str(e)}")
+        print(f"× 读取Excel或生成图片过程中发生错误: {str(e)}")
+
 
     print("" + "="*50)
     print("低波动股票按行业分类列表：")
@@ -495,4 +518,4 @@ if __name__ == "__main__":
             bs.logout()
             print(" Baostock 已登出。")
 
-    print(f"{'='*60}本次任务执行完毕。{'='*60}")
+    print(f"{ '='*60}本次任务执行完毕。{'='*60}")
