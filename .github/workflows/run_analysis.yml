@@ -64,6 +64,12 @@ jobs:
       with:
         name: low-volatility-stocks-image
         path: low_volatility_stocks.jpg
+
+    - name: Upload low volatility stocks image (prefixed)
+      uses: actions/upload-artifact@v4
+      with:
+        name: low-volatility-stocks-image-prefixed
+        path: low_volatility_stocks_prefixed.jpg
         
     - name: Send mail
       uses: dawidd6/action-send-mail@v3
@@ -76,4 +82,4 @@ jobs:
         body: Attached are the results of the stock analysis.
         to: cjbcmp@163.com
         from: cjbcmp@163.com
-        attachments: low_volatility_stocks.xlsx,low_volatility_stocks.jpg
+        attachments: low_volatility_stocks.xlsx,low_volatility_stocks.jpg,low_volatility_stocks_prefixed.jpg
