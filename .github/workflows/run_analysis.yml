@@ -1,1 +1,63 @@
-﻿name: Run Analysis`n`non:`n  repository_dispatch:`n    types: [stockdata-update]`n  workflow_dispatch:`n`njobs:`n  analyze_data:`n    runs-on: ubuntu-latest`n    steps:`n    - uses: actions/checkout@v4`n    - uses: actions/setup-python@v5`n      with:`n        python-version: '3.10'`n`n    - name: Cache pip`n      uses: actions/cache@v4`n      with:`n        path: ~/.cache/pip`n        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}`n        restore-keys: |`n          ${{ runner.os }}-pip-`n`n    - name: Install dependencies`n      run: |`n        python -m pip install --upgrade pip`n        # 补全分析所需的所有核心库`n        python -m pip install pandas numpy openpyxl matplotlib seaborn lxml baostock plotly kaleido Pillow xlsxwriter`n`n    - name: Download Artifact from Stockdata`n      id: download_artifact`n      if: github.event_name == 'repository_dispatch'`n      uses: dawidd6/action-download-artifact@v6`n      with:`n        github_token: ${{ secrets.PAT_TOKEN }}`n        workflow: daily_data_generation.yml`n        name: stock-kline-data`n        repo: cjbcmp/Stockdata`n        run_id: ${{ github.event.client_payload.run_id }}`n        if_no_artifact_found: warn`n`n    - name: Fallback to Latest Data from Release`n      if: steps.download_artifact.outcome != 'success'`n      uses: dsaltares/fetch-gh-release-asset@master`n      with:`n        repo: 'cjbcmp/Stockdata'`n        version: 'tags/latest-data'`n        file: 'stock_kline_data.xlsx'`n        target: 'stock_kline_data.xlsx'`n        token: ${{ secrets.PAT_TOKEN }}`n`n    - name: Run analysis script`n      run: python Passive-Analysis.py`n`n    - name: Upload results`n      uses: actions/upload-artifact@v4`n      with:`n        name: analysis-results`n        path: |`n           *.xlsx`n           *.jpg`n           K_line_charts/`n      continue-on-error: true
+name: Run Analysis
+
+on:
+  repository_dispatch:
+    types: [stockdata-update]
+  workflow_dispatch:
+
+jobs:
+  analyze_data:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    
+    - name: Cache pip
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pandas numpy openpyxl matplotlib seaborn lxml baostock plotly kaleido Pillow xlsxwriter
+
+    - name: Download Artifact from Stockdata
+      id: download_artifact
+      if: github.event_name == 'repository_dispatch'
+      uses: dawidd6/action-download-artifact@v6
+      with:
+        github_token: ${{ secrets.PAT_TOKEN }}
+        workflow: daily_data_generation.yml
+        name: stock-kline-data
+        repo: cjbcmp/Stockdata
+        run_id: ${{ github.event.client_payload.run_id }}
+        if_no_artifact_found: warn
+
+    - name: Fallback to Latest Data from Release
+      if: steps.download_artifact.outcome != 'success'
+      uses: dsaltares/fetch-gh-release-asset@master
+      with:
+        repo: 'cjbcmp/Stockdata'
+        version: 'tags/latest-data'
+        file: 'stock_kline_data.xlsx'
+        target: 'stock_kline_data.xlsx'
+        token: ${{ secrets.PAT_TOKEN }}
+
+    - name: Run analysis script
+      run: python Passive-Analysis.py
+
+    - name: Upload results
+      uses: actions/upload-artifact@v4
+      with:
+        name: analysis-results
+        path: |
+           *.xlsx
+           *.jpg
+           K_line_charts/
+      continue-on-error: true
