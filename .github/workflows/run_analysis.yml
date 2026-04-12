@@ -61,24 +61,3 @@ jobs:
            *.jpg
            K_line_charts/
       continue-on-error: true
-   
-      - name: Send Email Notification
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.163.com
-          server_port: 465
-          username: ${{secrets.MAIL_USERNAME}}
-          password: ${{secrets.MAIL_PASSWORD}}
-          subject: "股票低波动率分析结果 - ${{ github.run_id }}"
-          to: cjbcmp@163.com
-          from: "GitHub Actions Analysis"
-          body: |
-            您好，
-            
-            Passive-Analysis 自动化分析任务已完成。
-            附件包含生成的 low_volatility_stocks.xlsx 文件及所有图表 (.jpg)。
-            
-            任务 ID: ${{ github.run_id }}
-            运行状态: 成功
-          attachments: low_volatility_stocks.xlsx,*.jpg
-
