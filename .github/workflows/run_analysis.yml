@@ -60,7 +60,9 @@ jobs:
            *.xlsx
            *.jpg
            K_line_charts/
-          - name: Send Email Notification
+      continue-on-error: true
+
+       - name: Send Email Notification
         uses: dawidd6/action-send-mail@v3
         with:
           # SMTP 服务器配置 (以 163 邮箱为例)
@@ -87,4 +89,3 @@ jobs:
             运行状态: 成功
           # 附件列表：包含指定的 xlsx 和所有 jpg 图片
           attachments: low_volatility_stocks.xlsx,*.jpg
-      continue-on-error: true
