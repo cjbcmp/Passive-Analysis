@@ -32,7 +32,7 @@ jobs:
       if: github.event_name == 'repository_dispatch'
       uses: dawidd6/action-download-artifact@v6
       with:
-        github_token: ${{ secrets.PAT_TOKEN }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
         workflow: daily_data_generation.yml
         name: stock-kline-data
         repo: cjbcmp/Stockdata
@@ -47,7 +47,7 @@ jobs:
         version: 'tags/latest-data'
         file: 'stock_kline_data.xlsx'
         target: 'stock_kline_data.xlsx'
-        token: ${{ secrets.PAT_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Run analysis script
       run: python Passive-Analysis.py
