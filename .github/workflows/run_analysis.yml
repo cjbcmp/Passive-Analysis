@@ -57,7 +57,7 @@ jobs:
       with:
         name: analysis-results
         path: |
-           *.xlsx
+           low_volatility_stocks.xlsx
            *.jpg
            K_line_charts/
       continue-on-error: true
