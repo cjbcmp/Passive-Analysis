@@ -61,29 +61,6 @@ jobs:
            *.jpg
            K_line_charts/
       continue-on-error: true
-
-       - name: Send Email Notification
-        uses: dawidd6/action-send-mail@v3
-        with:
-          # SMTP 服务器配置 (以 163 邮箱为例)
-          server_address: smtp.163.com
-          server_port: 465
-          # 您的发件人邮箱账号 (请在 GitHub Secrets 中设置 MAIL_USERNAME)
-          username: ${{secrets.MAIL_USERNAME}}
-          # 您的发件人邮箱授权码 (请在 GitHub Secrets 中设置 MAIL_PASSWORD)
-          password: ${{secrets.MAIL_PASSWORD}}
-          # 邮件主题
-          subject: 股票低波动率分析结果 - ${{ github.run_id }}
-          # 收件人邮箱
-          to: cjbcmp@163.com
-          # 发件人显示名称
-          from: GitHub Actions Analysis
-          # 邮件正文
-          body: |
-            您好，
-            
-            Passive-Analysis 自动化分析任务已完成。
-            附件包含生成的 low_volatility_stocks.xlsx 文件及所有图表 (.jpg)。
             
             任务 ID: ${{ github.run_id }}
             运行状态: 成功
