@@ -65,7 +65,7 @@ jobs:
     - name: Upload second results
       uses: actions/upload-artifact@v4
       with:
-        name: analysis-results
+        name: analysis second results
         path: |
            K_line_charts/
       continue-on-error: true
